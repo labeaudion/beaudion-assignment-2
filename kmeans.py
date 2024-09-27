@@ -75,14 +75,14 @@ class KMeans:
         return self._assign_labels(X)
 
 # Example usage:
-if __name__ == "__main__":
-    np.random.seed(42)
-    X = np.random.rand(100, 2)  # 100 points in 2D
+#if __name__ == "__main__":
+  #  np.random.seed(42)
+  #  X = np.random.rand(100, 2)  # 100 points in 2D
 
     # Create and fit the model using KMeans++
-    kmeans = KMeans(n_clusters=3, init_method='kmeans++')
-    kmeans.fit(X)
+  #  kmeans = KMeans(n_clusters=3, init_method='kmeans++')
+  #  kmeans.fit(X)
 
     # Print the resulting centroids and labels
-    print("Centroids:\n", kmeans.centroids)
-    print("Labels:\n", kmeans.labels)
+  #  print("Centroids:\n", kmeans.centroids)
+   # print("Labels:\n", kmeans.labels)
