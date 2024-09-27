@@ -1,80 +1,29 @@
+from flask import Flask, render_template, request, jsonify
 import numpy as np
-import matplotlib.pyplot as plt
+from kmeans import KMeans
 
-# algorithm for Kmeans
-class Kmeans:
-    def __init__(self, n_clusters=3, max_iter=100, tolerance=1e-4, init_method='random'):
-        self.n_clusters = n_clusters
-        self.max_iter = max_iter
-        self.tolerance = tolerance
-        self.init_method = init_method
-        self.centroids = None
+app = Flask(__name__)
 
-    # goes through the algorithm
-    def fit(self, X):
-        # Initialize centroids based on the specified method
-        self.centroids = self.initialize_centroids(X)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-        for i in range(self.max_iter):
-            # Step 1: Assign clusters
-            labels = self.assign_clusters(X)
+@app.route('/kmeans', methods=['POST'])
+def kmeans():
+    data = request.json['data']
+    n_clusters = request.json['n_clusters']
+    init_method = request.json['init_method']
 
-            # Step 2: Calculate new centroids
-            new_centroids = self.calculate_centroids(X, labels)
+    kmeans = KMeans(n_clusters=n_clusters, init_method=init_method)
+    kmeans.fit(np.array(data))
 
-            # Check for convergence
-            if np.all(np.abs(new_centroids - self.centroids) < self.tolerance):
-                break
-            
-            self.centroids = new_centroids
-
-
-    # initializes centroids
-    def initialize_centroids(self, X):
-        if self.init_method == 'random':
-            np.random.seed(42)
-            random_indices = np.random.choice(X.shape[0], self.n_clusters, replace=False)
-            return X[random_indices]
-        elif self.init_method == 'farthest_first':
-            centroids = [X[np.random.randint(X.shape[0])]]  # Choose one random point
-            for _ in range(1, self.n_clusters):
-                distances = np.linalg.norm(X[:, np.newaxis] - centroids, axis=2)
-                min_distances = np.min(distances, axis=1)
-                next_centroid = X[np.argmax(min_distances)]
-                centroids.append(next_centroid)
-            return np.array(centroids)
-        elif self.init_method == 'kmeans++':
-            centroids = [X[np.random.randint(X.shape[0])]]  # Choose one random point
-            for _ in range(1, self.n_clusters):
-                distances = np.linalg.norm(X[:, np.newaxis] - centroids, axis=2)
-                min_distances = np.min(distances, axis=1)
-                probabilities = min_distances ** 2
-                probabilities /= np.sum(probabilities)  # Normalize
-                next_centroid = X[np.random.choice(X.shape[0], p=probabilities)]
-                centroids.append(next_centroid)
-            return np.array(centroids)
-        elif self.init_method == 'manual':
-            return self.manual_initialization(X)
-        else:
-            raise ValueError("Invalid initialization method.")
-        
-    # manual initalization
-    def manual_initialization(self, X):
-        plt.scatter(X[:, 0], X[:, 1], s=30)
-        plt.title("Select initial centroids (click on points)")
-        points = plt.ginput(self.n_clusters)  # Get manual points from user
-        plt.close()
-        return np.array(points)
+    response = {
+        'labels': kmeans.labels.tolist(),
+        'centroids': kmeans.centroids.tolist(),
+        'history': [(labels.tolist(), centroids.tolist()) for labels, centroids in kmeans.history]
+    }
     
-    # assigns clusters by Euclidean distance
-    def assign_clusters(self, X):
-        distances = np.linalg.norm(X[:, np.newaxis] - self.centroids, axis=2)
-        return np.argmin(distances, axis=1)
+    return jsonify(response)
 
-    # 
-    def calculate_centroids(self, X, labels):
-        return np.array([X[labels == k].mean(axis=0) for k in range(self.n_clusters)])
-
-    # predicts the cluster assignments for new data points
-    def predict(self, X):
-        return self.assign_clusters(X)
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=3000)
