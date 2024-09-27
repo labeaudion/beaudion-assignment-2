@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Means Clustering</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>K-Means Clustering Visualization</h1>
+    <div>
+        <label for="n_clusters">Number of Clusters:</label>
+        <input type="number" id="n_clusters" value="3" min="1" max="10">
+    </div>
+    <div>
+        <label for="init_method">Initialization Method:</label>
+        <select id="init_method">
+            <option value="random">Random</option>
+            <option value="farthest_first">Farthest First</option>
+            <option value="kmeans++">KMeans++</option>
+            <option value="manual">Manual</option>
+        </select>
+    </div>
+    <button id="run_kmeans">Run K-Means</button>
+    <canvas id="canvas" width="600" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let points = [];
+        for (let i = 0; i < 100; i++) {
+            points.push([Math.random() * canvas.width, Math.random() * canvas.height]);
+        }
+
+        function drawPoints() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            points.forEach(point => {
+                ctx.fillStyle = 'blue';
+                ctx.beginPath();
+                ctx.arc(point[0], point[1], 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        document.getElementById('run_kmeans').onclick = async () => {
+            const n_clusters = document.getElementById('n_clusters').value;
+            const init_method = document.getElementById('init_method').value;
+
+            const response = await fetch('/kmeans', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ data: points, n_clusters, init_method })
+            });
+            const result = await response.json();
+            drawResults(result);
+        };
+
+        function drawResults(result) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'lime', 'brown'];
+
+            result.labels.forEach((label, index) => {
+                ctx.fillStyle = colors[label % colors.length];
+                ctx.beginPath();
+                ctx.arc(points[index][0], points[index][1], 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            result.centroids.forEach(centroid => {
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(centroid[0], centroid[1], 10, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        drawPoints();
+    </script>
+</body>
+</html>
