@@ -5,6 +5,8 @@ let currentLabels = []; // To store the labels from KMeans
 let centroids = []; // To store the centroids from KMeans
 let steps = []; // Array to store steps for step-through
 let currentStep = 0; // To keep track of the current step
+let isKmeansStarted = false; // Track if KMeans has been started
+
 
 // Function to generate random data points
 function generateData() {
@@ -52,13 +54,51 @@ function drawCentroid(coords) {
     svg.append("circle")
         .attr("cx", coords[0])
         .attr("cy", coords[1])
-        .attr("r", 8)
+        .attr("r", 12)
         .attr("fill", "red")
-        .attr("class", "centroid");
+        .attr("class", "centroid")
+        .attr("stroke", "black") // Add a black stroke for better visibility
+        .attr("stroke-width", 2); // Set stroke width
 }
 
-// Run KMeans with selected centroids or generate new ones
-document.getElementById('run-kmeans').addEventListener('click', async () => {
+// Event listener for convergence button
+document.getElementById('converge-kmeans').addEventListener('click', () => {
+    if (!isKMeansStarted) {
+        alert("Please start KMeans first.");
+        return;
+    }
+
+    // Visualize the final state after convergence
+    drawStep(steps[steps.length - 1]); // Draw the last step (final result)
+});
+
+// Function to visualize the initial centroids
+function visualizeInitialCentroids() {
+    svg.selectAll("circle.centroid").remove(); // Clear previous centroids
+
+    // Draw the resulting centroids
+    centroids.forEach((centroid, index) => {
+        svg.append("circle")
+            .attr("cx", centroid[0])
+            .attr("cy", centroid[1])
+            .attr("r", 8)
+            .attr("fill", d3.schemeCategory10[index % 10]) // Use color scheme
+            .attr("class", "centroid");
+    });
+
+    // Optionally draw initial data points with their initial labels
+    points.forEach((point, index) => {
+        svg.append("circle")
+            .attr("cx", point[0])
+            .attr("cy", point[1])
+            .attr("r", 5)
+            .attr("fill", d3.schemeCategory10[currentLabels[index] % 10]) // Color by initial cluster
+            .attr("class", "result-point");
+    });
+}
+
+// Run KMeans and show the first step
+document.getElementById('start-kmeans').addEventListener('click', async () => {
     const method = document.getElementById('init-method').value;
 
     // Check for manual method and selected centroids
@@ -89,8 +129,10 @@ document.getElementById('run-kmeans').addEventListener('click', async () => {
     currentLabels = result.labels; // Store the labels
     steps = result.steps; // Store the steps for step-through
 
-    // Visualize the initial result
-    visualizeResults();
+    // Visualize the first step
+    drawStep(steps[0]); // Draw the first step
+    isKMeansStarted = true; // Set KMeans started flag
+    alert("KMeans has started. You can now step through or converge to the final result.");
 });
 
 // Function to visualize the KMeans results
@@ -140,9 +182,11 @@ function drawStep(step) {
         svg.append("circle")
             .attr("cx", centroid[0])
             .attr("cy", centroid[1])
-            .attr("r", 8)
+            .attr("r", 12)
             .attr("fill", d3.schemeCategory10[index % 10]) // Use color scheme
-            .attr("class", "centroid");
+            .attr("class", "centroid")
+            .attr("stroke", "black") // Add a black stroke for better visibility
+            .attr("stroke-width", 2); // Set stroke width
     });
 
     // Draw data points for this step
