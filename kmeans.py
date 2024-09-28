@@ -1,88 +1,84 @@
 import numpy as np
 
 class KMeans:
-    def __init__(self, n_clusters=3, max_iter=100, tolerance=1e-4, init_method='random'):
+    def __init__(self, n_clusters=3, max_iter=100, tol=1e-4):
         self.n_clusters = n_clusters
         self.max_iter = max_iter
-        self.tolerance = tolerance
-        self.init_method = init_method
+        self.tol = tol
         self.centroids = None
         self.labels = None
+        self.steps = []  # To store the steps for step-through
 
-    def fit(self, X):
-        # initializes centroids based on the chosen method
-        self.centroids = self.initialize_centroids(X)
-        
-        for i in range(self.max_iter):
-            # assigns labels
-            self.labels = self.assign_labels(X)
-            
-            # calculates new centroids
-            new_centroids = self.calculate_centroids(X)
-            
-            # checks for convergence
-            if np.all(np.abs(new_centroids - self.centroids) < self.tolerance):
+    def fit(self, data, init_method='random', initial_centroids=None):
+        # Initialize centroids
+        if init_method == 'random':
+            self.centroids = data[np.random.choice(data.shape[0], self.n_clusters, replace=False)]
+        elif init_method == 'manual':
+            if initial_centroids is not None:
+                self.centroids = np.array(initial_centroids)
+            else:
+                raise ValueError("Initial centroids must be provided for manual initialization.")
+        elif init_method == 'farthest':
+            self.centroids = self.farthest_first(data)
+        elif init_method == 'kmeans++':
+            self.centroids = self.kmeans_plus_plus(data)
+        else:
+            raise ValueError("Unknown initialization method.")
+
+        for _ in range(self.max_iter):
+            # Assign labels based on closest centroid
+            self.labels = self._assign_labels(data)
+
+            # Store the current step
+            self.steps.append({
+                'centroids': self.centroids.tolist(),
+                'labels': self.labels.tolist()
+            })
+
+            # Calculate new centroids
+            new_centroids = np.array([data[self.labels == i].mean(axis=0) for i in range(self.n_clusters)])
+
+            # Check for convergence
+            if np.linalg.norm(new_centroids - self.centroids) < self.tol:
                 break
-            
+
             self.centroids = new_centroids
 
-    # function to initalize centroids
-    def initialize_centroids(self, X):
-        if self.init_method == 'random':
-            return self.random_initialization(X)
-        elif self.init_method == 'farthest_first':
-            return self.farthest_first_initialization(X)
-        elif self.init_method == 'kmeans++':
-            return self.kmeans_plus_plus_initialization(X)
-        else:
-            raise ValueError("Invalid initialization method specified.")
+        # Store the final state
+        self.steps.append({
+            'centroids': self.centroids.tolist(),
+            'labels': self.labels.tolist()
+        })
 
-    # function that implements random initialization
-    def random_initialization(self, X):
-        random_indices = np.random.choice(X.shape[0], self.n_clusters, replace=False)
-        return X[random_indices]
-
-    # function that implements farthest first implementation
-    def farthest_first_initialization(self, X):
-        centroids = [X[np.random.choice(X.shape[0])]]
-        for _ in range(1, self.n_clusters):
-            distances = np.min(np.linalg.norm(X[:, np.newaxis] - centroids, axis=2), axis=1)
-            next_centroid = X[np.argmax(distances)]
-            centroids.append(next_centroid)
-        return np.array(centroids)
-
-    # function that implements kmeans++ implementation
-    def kmeans_plus_plus_initialization(self, X):
-        centroids = [X[np.random.choice(X.shape[0])]]
-        for _ in range(1, self.n_clusters):
-            distances = np.min(np.linalg.norm(X[:, np.newaxis] - centroids, axis=2), axis=1)
-            probabilities = distances / distances.sum()
-            next_centroid = X[np.random.choice(X.shape[0], p=probabilities)]
-            centroids.append(next_centroid)
-        return np.array(centroids)
-
-    # function that assigns labels to data points based on Euclidean distance
-    def assign_labels(self, X):
-        distances = np.linalg.norm(X[:, np.newaxis] - self.centroids, axis=2)
+    def _assign_labels(self, data):
+        distances = np.linalg.norm(data[:, np.newaxis] - self.centroids, axis=2)
         return np.argmin(distances, axis=1)
 
-    # function that calculates centroids given a dataset
-    def calculate_centroids(self, X):
-        return np.array([X[self.labels == i].mean(axis=0) for i in range(self.n_clusters)])
+    def farthest_first(self, data):
+        # Implement Farthest First initialization
+        centroids = [data[np.random.choice(data.shape[0])]]  # Choose first centroid randomly
+        for _ in range(1, self.n_clusters):
+            distances = np.linalg.norm(data[:, np.newaxis] - centroids, axis=2)
+            farthest_point_index = np.argmax(np.min(distances, axis=1))
+            centroids.append(data[farthest_point_index])
+        return np.array(centroids)
 
-    # function that assigns labels to new data points based on centroids determined during fit(self, X)
-    def predict(self, X):
-        return self._assign_labels(X)
+    def kmeans_plus_plus(self, data):
+        # Implement KMeans++ initialization
+        centroids = [data[np.random.choice(data.shape[0])]]  # Choose first centroid randomly
+        for _ in range(1, self.n_clusters):
+            distances = np.linalg.norm(data[:, np.newaxis] - centroids, axis=2)
+            min_distances = np.min(distances, axis=1)
+            probabilities = min_distances / np.sum(min_distances)
+            next_centroid_index = np.random.choice(data.shape[0], p=probabilities)
+            centroids.append(data[next_centroid_index])
+        return np.array(centroids)
 
-# Example usage:
-#if __name__ == "__main__":
-  #  np.random.seed(42)
-  #  X = np.random.rand(100, 2)  # 100 points in 2D
+    def get_centroids(self):
+        return self.centroids
 
-    # Create and fit the model using KMeans++
-  #  kmeans = KMeans(n_clusters=3, init_method='kmeans++')
-  #  kmeans.fit(X)
+    def get_labels(self):
+        return self.labels
 
-    # Print the resulting centroids and labels
-  #  print("Centroids:\n", kmeans.centroids)
-   # print("Labels:\n", kmeans.labels)
+    def get_steps(self):
+        return self.steps

@@ -1,25 +1,7 @@
-# Makefile for Flask K-Means Clustering Project
+.PHONY: install run
 
-# Python environment setup
-PYTHON=python3
-PIP=pip3
-
-# List of required packages
-REQUIREMENTS=requirements.txt
-
-# Default target
-all: install
-
-# Install dependencies
 install:
-	$(PIP) install -r $(REQUIREMENTS)
+	pip install -r requirements.txt
 
-# Run the application
 run:
-	$(PYTHON) app.py
-
-# Clean up any temporary files
-clean:
-	find . -type __pycache__ -exec rm -rf {} \;
-
-.PHONY: all install run clean
+	FLASK_APP=app.py flask run --host=0.0.0.0 --port=3000
