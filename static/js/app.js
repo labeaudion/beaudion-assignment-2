@@ -145,7 +145,12 @@ document.getElementById('start-kmeans').addEventListener('click', async () => {
 
     // Include selected centroids only for manual method
     if (method === 'manual') {
-        requestData.initial_centroids = selectedCentroids;
+        // Send original coordinates, converting back to original range
+        requestData.initial_centroids = selectedCentroids.map(coord => [
+            (coord[0] - 50),  // Reverse scaling by subtracting the offset
+            (450 - coord[1])  // Reverse scaling for Y-axis
+        ]);
+    
     }
 
     const response = await fetch('/kmeans', {
