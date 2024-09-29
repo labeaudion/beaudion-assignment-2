@@ -100,6 +100,7 @@ function visualizeInitialCentroids() {
 // Run KMeans and show the first step
 document.getElementById('start-kmeans').addEventListener('click', async () => {
     const method = document.getElementById('init-method').value;
+    const nClusters = parseInt(document.getElementById('numCentroids').value, 10); // Fetch the number again
 
     // Check for manual method and selected centroids
     if (method === 'manual' && selectedCentroids.length === 0) {
@@ -111,6 +112,7 @@ document.getElementById('start-kmeans').addEventListener('click', async () => {
     const requestData = {
         data: points,
         init_method: method,
+        n_clusters: nClusters
     };
 
     // Include selected centroids only for manual method
