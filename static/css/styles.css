@@ -1,3 +1,32 @@
+body {
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    align-items: center; /* Center horizontally */
+    justify-content: center; /* Center vertically */
+    height: 100vh; /* Full height of the viewport */
+    margin: 0; /* Remove default margin */
+    background-color: #f0f0f0; /* Optional background color */
+}
+
+h1 {
+    margin-bottom: 20px; /* Space between heading and controls */
+}
+
+div {
+    display: flex;
+    flex-direction: column; /* Stack controls vertically */
+    align-items: center; /* Center controls horizontally */
+    margin-bottom: 20px; /* Space below the controls */
+}
+
+label, input, select, button {
+    margin: 5px; /* Space between elements */
+}
+
+#plot {
+    border: 1px solid black; /* Border for the plot */
+}
+
 .axis line {
     stroke: #ccc; /* Light gray for axis lines */
 }
