@@ -58,12 +58,12 @@ function drawPoints() {
 function enableManualSelection() {
     svg.on("click", function(event) {
         const coords = d3.pointer(event);
-        const x = coords[0];
-        const y = coords[1];
+        const clampedX = Math.max(50, Math.min(650, coords[0]));
+        const clampedY = Math.max(50, Math.min(450, coords[1]));
         const maxCentroids = parseInt(document.getElementById('numCentroids').value, 10);
         if (selectedCentroids.length < maxCentroids) { // Limit to the user-defined number of clusters
-            selectedCentroids.push([x, y]); // Store clicked coordinates
-            drawCentroid([x, y]); // Visualize the selected centroid
+            selectedCentroids.push([clampedX, clampedY]); // Store clicked coordinates
+            drawCentroid([clampedX, clampedY]); // Visualize the selected centroid
         } else {
             alert(`You can only select up to ${maxCentroids} centroids.`);
         }
