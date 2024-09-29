@@ -1,4 +1,6 @@
-const svg = d3.select("#plot");
+const svg = d3.select("#plot")
+    .attr("width", 700)
+    .attr("height", 500);
 let points = []; // Array to store generated data points
 let selectedCentroids = []; // Array to store manual centroids
 let currentLabels = []; // To store the labels from KMeans
@@ -6,6 +8,25 @@ let centroids = []; // To store the centroids from KMeans
 let steps = []; // Array to store steps for step-through
 let currentStep = 0; // To keep track of the current step
 let isKmeansStarted = false; // Track if KMeans has been started
+
+
+const xScale = d3.scaleLinear()
+    .domain([0, 600])
+    .range([50, 650]);
+
+const yScale = d3.scaleLinear()
+    .domain([0, 400])
+    .range([450, 50]);
+
+const xAxis = d3.axisBottom(xScale);
+svg.append("g")
+    .attr("transform", "translate(0, 450)") // Position the x-axis
+    .call(xAxis);
+
+const yAxis = d3.axisLeft(yScale);
+svg.append("g")
+    .attr("transform", "translate(50, 0)") // Position the y-axis
+    .call(yAxis);
 
 
 // Function to generate random data points
@@ -25,20 +46,24 @@ function drawPoints() {
         .enter()
         .append("circle")
         .attr("class", "data-point")
-        .attr("cx", d => d[0])
-        .attr("cy", d => d[1])
+        .attr("cx", d => xScale(d[0]))
+        .attr("cy", d => yScale(d[1]))
         .attr("r", 5)
         .attr("fill", "blue");
 }
+
+
 
 // Capture clicks for manual centroid selection
 function enableManualSelection() {
     svg.on("click", function(event) {
         const coords = d3.pointer(event);
+        const x = coords[0];
+        const y = coords[1];
         const maxCentroids = parseInt(document.getElementById('numCentroids').value, 10);
         if (selectedCentroids.length < maxCentroids) { // Limit to the user-defined number of clusters
-            selectedCentroids.push(coords); // Store clicked coordinates
-            drawCentroid(coords); // Visualize the selected centroid
+            selectedCentroids.push([x, y]); // Store clicked coordinates
+            drawCentroid([x, y]); // Visualize the selected centroid
         } else {
             alert(`You can only select up to ${maxCentroids} centroids.`);
         }
@@ -70,6 +95,9 @@ document.getElementById('converge-kmeans').addEventListener('click', () => {
 
     // Visualize the final state after convergence
     drawStep(steps[steps.length - 1]); // Draw the last step (final result)
+
+    // Alert the user that the algorithm has converged
+    alert("Kmeans has converged!")
 });
 
 // Function to visualize the initial centroids
@@ -79,8 +107,8 @@ function visualizeInitialCentroids() {
     // Draw the resulting centroids
     centroids.forEach((centroid, index) => {
         svg.append("circle")
-            .attr("cx", centroid[0])
-            .attr("cy", centroid[1])
+            .attr("cx", xScale(centroid[0]))
+            .attr("cy", yScale(centroid[1]))
             .attr("r", 8)
             .attr("fill", d3.schemeCategory10[index % 10]) // Use color scheme
             .attr("class", "centroid");
@@ -89,8 +117,8 @@ function visualizeInitialCentroids() {
     // Optionally draw initial data points with their initial labels
     points.forEach((point, index) => {
         svg.append("circle")
-            .attr("cx", point[0])
-            .attr("cy", point[1])
+            .attr("cx", xScale(point[0]))
+            .attr("cy", yScale(point[1]))
             .attr("r", 5)
             .attr("fill", d3.schemeCategory10[currentLabels[index] % 10]) // Color by initial cluster
             .attr("class", "result-point");
@@ -145,8 +173,8 @@ function visualizeResults() {
     // Draw the resulting centroids
     centroids.forEach((centroid, index) => {
         svg.append("circle")
-            .attr("cx", centroid[0])
-            .attr("cy", centroid[1])
+            .attr("cx", xScale(centroid[0]))
+            .attr("cy", yScale(centroid[1]))
             .attr("r", 8)
             .attr("fill", d3.schemeCategory10[index % 10]) // Use color scheme
             .attr("class", "centroid");
@@ -155,8 +183,8 @@ function visualizeResults() {
     // Draw the resulting data points based on their labels
     points.forEach((point, index) => {
         svg.append("circle")
-            .attr("cx", point[0])
-            .attr("cy", point[1])
+            .attr("cx", xScale(point[0]))
+            .attr("cy", yScale(point[1]))
             .attr("r", 5)
             .attr("fill", d3.schemeCategory10[currentLabels[index] % 10]) // Color by cluster
             .attr("class", "result-point");
@@ -170,7 +198,7 @@ document.getElementById('step-kmeans').addEventListener('click', () => {
         drawStep(step);
         currentStep++;
     } else {
-        alert("No more steps to display.");
+        alert("No more steps to display, Kmeans has converged.");
     }
 });
 
@@ -182,8 +210,8 @@ function drawStep(step) {
     // Draw centroids for this step
     step.centroids.forEach((centroid, index) => {
         svg.append("circle")
-            .attr("cx", centroid[0])
-            .attr("cy", centroid[1])
+            .attr("cx", xScale(centroid[0]))
+            .attr("cy", yScale(centroid[1]))
             .attr("r", 12)
             .attr("fill", d3.schemeCategory10[index % 10]) // Use color scheme
             .attr("class", "centroid")
@@ -194,8 +222,8 @@ function drawStep(step) {
     // Draw data points for this step
     points.forEach((point, index) => {
         svg.append("circle")
-            .attr("cx", point[0])
-            .attr("cy", point[1])
+            .attr("cx", xScale(point[0]))
+            .attr("cy", yScale(point[1]))
             .attr("r", 5)
             .attr("fill", d3.schemeCategory10[step.labels[index] % 10]) // Color by cluster
             .attr("class", "result-point");
