@@ -1,0 +1,12 @@
+.axis line {
+    stroke: #ccc; /* Light gray for axis lines */
+}
+
+.axis path {
+    display: none; /* Hide the axis path */
+}
+
+.axis text {
+    font-size: 12px; /* Font size for axis labels */
+    fill: #333; /* Dark gray for axis text */
+}
